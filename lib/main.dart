@@ -1,6 +1,10 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(MyApp());
@@ -31,7 +35,7 @@ class _MyAppState extends State<MyApp> {
 
   void _startRecording() async {
     final appDir = await getApplicationDocumentsDirectory();
-    final recordingName = DateTime.now().toString() + '.aac';
+    final recordingName = DateTime.now().toString() + '.wav';
     final recordingPath = '${appDir.path}/$recordingName';
 
     setState(() {
@@ -46,6 +50,22 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _isRecording = false;
     });
+
+    final recording = File(_recordingPath);
+    final stream = http.ByteStream(Stream.castFrom(recording.openRead()));
+    final request = http.MultipartRequest('POST', Uri.parse('YOUR_API_URL'));
+
+    final multipartFile = http.MultipartFile(
+        'audio', stream, recording.lengthSync(),
+        filename: _recordingPath);
+    request.files.add(multipartFile);
+
+    final response = await request.send();
+    if (response.statusCode == 200) {
+      print('Audio uploaded successfully');
+    } else {
+      print('Failed to upload audio. Status code: ${response.statusCode}');
+    }
 
     await _audioRecorder!.stopRecorder();
   }
