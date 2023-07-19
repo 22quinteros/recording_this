@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
+import 'dart:convert';
 
 void main() => runApp(MyApp());
 
@@ -54,12 +55,12 @@ class _MyHomePageState extends State<MyHomePage> {
   Future<void> _stopRecording() async {
     final result = await _recorder!.stopRecorder();
 
-    if (result != null) {
+    if (result != null && result.isNotEmpty) {
       final audioPath = result;
 
       // Make POST request to API
       final response = await http.post(
-        Uri.parse('API_URL'),
+        Uri.parse('http://10.47.166.34:5055/api/flutter'),
         headers: {
           HttpHeaders.contentTypeHeader: 'audio/wav',
         },
@@ -73,6 +74,8 @@ class _MyHomePageState extends State<MyHomePage> {
         // Failed to upload audio
         print('Failed to upload audio');
       }
+    } else {
+      print('Error: Audio file path is empty or null.');
     }
 
     setState(() {
